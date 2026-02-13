@@ -1,16 +1,26 @@
-# scanning
-sudo nmap -sS -oN scan_results.txt 192.168.1.7
-[sudo] password for kali: 
-Starting Nmap 7.98 ( https://nmap.org ) at 2026-02-12 10:47 -0500
-Nmap scan report for 192.168.1.7
-Host is up (0.0082s latency).
-Not shown: 995 closed tcp ports (reset)
-PORT     STATE SERVICE
-8008/tcp open  http
-8009/tcp open  ajp13
-8443/tcp open  https-alt
-9000/tcp open  cslistener
-9080/tcp open  glrpc
-MAC Address: 64:BB:1E:93:D3:92 (Earda Technologies)
+# scanning_details_set1
+To understand a SYN scan, you first need to know how a normal TCP connection is established, known as the "Three-Way Handshake":
 
-Nmap done: 1 IP address (1 host up) scanned in 1.14 seconds
+SYN: The client sends a TCP packet with the SYN (Synchronize) flag set to the server, saying, "I want to start a connection."
+
+SYN-ACK: The server responds with a packet that has both the SYN and ACK (Acknowledgment) flags set, saying, "Okay, I'm ready. Let's talk."
+
+ACK: The client sends back a packet with the ACK flag set, confirming the connection. The connection is now ESTABLISHED.
+
+A TCP SYN Scan exploits the first two steps of this handshake.
+
+What is a TCP SYN Scan (-sS)? A TCP SYN Scan is a "half-open" scan because it doesn't complete the three-way handshake. Instead, it leaves the server hanging after step 2.
+
+Here's how it works:
+
+Nmap sends a SYN packet to the target port, just like a normal client would.
+
+Nmap analyzes the response:
+
+If the port is OPEN: The target responds with a SYN/ACK packet. Nmap immediately knows the port is open.
+
+If the port is CLOSED: The target responds with a RST (Reset) packet. This is a hard "no, go away" signal.
+
+Nmap does NOT complete the handshake. Upon receiving a SYN/ACK (indicating an open port), Nmap sends a RST packet back to tear down the connection attempt before it's fully established.
+
+flowchart TD A[Nmap sends SYN packet] --> B{Analyze Response} B -- SYN/ACK --> C[Send RST to break handshake] B -- RST --> D[Port is Closed] B -- No Response ICMP Error --> E[Port is Filtered by firewall] C --> F[Port is Open]
